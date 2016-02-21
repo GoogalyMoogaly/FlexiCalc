@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Flexi Time Calculator</title>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+<script type="text/javascript">
+var workingDay, start, lunch, end, diff;
+var fieldIds = ["workingDay", "startTime", "lunchDuration", "endTime", "timeDiff"];
+
+function currentTime() {
+    var today = new Date();
+    var h = today.getHours();
+    var m = today.getMinutes();
+    var s = today.getSeconds();
+    document.getElementById('currentTime').value = pad(h) + ":" + pad(m) + ":" + pad(s);
+    
+    if (document.getElementById("endTime").value.match(/^[012]?\d:[0-5]\d$/g) != null) {
+      timeString = document.getElementById("endTime").value;
+      timeComponents = timeString.split(":").map(Number);
+      endTime = new Date();
+      endTime.setHours(timeComponents[0]);
+      endTime.setMinutes(timeComponents[1]);
+      
+      timeLeft = new Date();
+      timeLeft.setHours(timeComponents[0] - h);
+      timeLeft.setMinutes(timeComponents[1] - m);
+      timeLeft.setSeconds(0 - s);
+      
+      prefix = "";
+      if (endTime < today) {
+        prefix = "-";
+        timeLeft.setHours(h - timeComponents[0]);
+        timeLeft.setMinutes(m - timeComponents[1]);
+        timeLeft.setSeconds(s);
+      }
+    
+      document.getElementById('remainingTime').value = prefix + pad(timeLeft.getHours()) + ":" + pad(timeLeft.getMinutes()) + ":" + pad(timeLeft.getSeconds());
+    }
+    
+    var t = setTimeout(currentTime, 500);
+}
+
+function calcStart() {
+  if (validateAllExcept("startTime") == true) {
+    getInputExcept("startTime");
+
+    startTime = new Date();
+    hours = end[0] - (workingDay[0] + diff[0]) - lunch[0]
+    minutes = end[1] - (workingDay[1] + diff[1]) - lunch[1]
+
+    startTime.setHours(hours);
+    startTime.setMinutes(minutes);
+    document.getElementById("startTime").value = pad(startTime.getHours()) + ":" + pad(startTime.getMinutes());
+  }
+}
+
+function calcLunch() {
+  if (validateAllExcept("lunchDuration") == true) {
+    getInputExcept("lunchDuration");
+
+    lunchTime = new Date();
+    hours = end[0] - (workingDay[0] + start[0] + diff[0])
+    minutes = end[1] - (workingDay[1] + start[1] + diff[1])
+
+    lunchTime.setHours(hours);
+    lunchTime.setMinutes(minutes);
+    document.getElementById("lunchDuration").value = pad(lunchTime.getHours()) + ":" + pad(lunchTime.getMinutes());
+  }
+}
+
+function calcEnd() {
+  if (validateAllExcept("endTime") == true) {
+    getInputExcept("endTime");
+
+    endTime = new Date();
+    hours = (workingDay[0] + start[0] + lunch[0] + diff[0])
+    minutes = (workingDay[1] + start[1] + lunch[1] + diff[1])
+
+    endTime.setHours(hours);
+    endTime.setMinutes(minutes);
+    document.getElementById("endTime").value = pad(endTime.getHours()) + ":" + pad(endTime.getMinutes());
+  }
+}
+
+function calcDiff() {
+  if (validateAllExcept("timeDiff") == true) {
+    getInputExcept("timeDiff");
+
+    diffTime = new Date();
+    hours = end[0] - (start[0] + lunch[0]) - workingDay[0]
+    minutes = end[1] - (start[1] + lunch[1]) - workingDay[1]
+
+    diffTime.setHours(hours);
+    diffTime.setMinutes(minutes);
+
+    minTime = new Date();
+    minTime.setHours(0);
+    minTime.setMinutes(0);
+
+    prefix = "";
+    if (diffTime < minTime) {
+      prefix = "-";
+      diffTime.setHours(24 - diffTime.getHours());
+      diffTime.setMinutes(00 - diffTime.getMinutes());
+    }
+    document.getElementById("timeDiff").value = prefix + pad(diffTime.getHours()) + ":" + pad(diffTime.getMinutes());
+  }
+}
+
+function validateAllExcept(except) {
+  document.getElementById("errors").innerHTML = "";
+  document.getElementById("error-panel").className = "row hidden";
+  runningValidationResult = true;
+  if ("workingDay" != except) {
+    runningValidationResult = validate("workingDay") && runningValidationResult;
+  }
+  if ("startTime" != except) {
+    runningValidationResult = validate("startTime") && runningValidationResult;
+  }
+  if ("lunchDuration" != except) {
+    runningValidationResult = validate("lunchDuration") && runningValidationResult;
+  }
+  if ("endTime" != except) {
+    runningValidationResult = validate("endTime") && runningValidationResult;
+  }
+  if ("timeDiff" != except) {
+    runningValidationResult = validate("timeDiff") && runningValidationResult;
+  }
+  return runningValidationResult;
+}
+
+function validate(fieldName) {
+  valid = false;
+  value = document.getElementById(fieldName).value;
+  fieldLabel = document.getElementById(fieldName + "Label").innerHTML;
+  if (value.match(/^[012]?\d:[0-5]\d$/g) != null) {
+    valid = true;
+  } else if ((value.match(/^[-+]?[012]?\d:[0-5]\d$/g) != null) && ("timeDiff" == fieldName)) {
+    valid = true;
+  } else {
+    error = fieldLabel.substring(0, fieldLabel.length - 1) + " is not valid.<br/> ";
+    document.getElementById("errors").innerHTML = document.getElementById("errors").innerHTML + error;
+    document.getElementById("error-panel").className = "row show";
+  }
+  return valid;
+}
+
+function getInputExcept(except) {
+  if ("workingDay" != except) {
+    workingDay = getTime(document.getElementById("workingDay").value);
+  }
+  if ("startTime" != except) {
+    start = getTime(document.getElementById("startTime").value);
+  }
+  if ("lunchDuration" != except) {
+    lunch = getTime(document.getElementById("lunchDuration").value);
+  }
+  if ("endTime" != except) {
+    end = getTime(document.getElementById("endTime").value);
+  }
+  if ("timeDiff" != except) {
+    diff = getDiffTime(document.getElementById("timeDiff").value);
+  }
+}
+
+function getTime(timeString) {
+  timeString = timeString.replace(/[^0-9:]/g,'');
+  timeComponents = timeString.split(":").map(Number);
+  return timeComponents;
+}
+
+function getDiffTime(timeString) {
+  negative = false;
+  if (timeString[0] == "-") {
+    negative = true;
+  }
+  timeString = timeString.replace(/[^0-9:]/g,'');
+  timeComponents = timeString.split(":").map(Number);
+  if (negative) {
+    timeComponents[0] = timeComponents[0] * -1;
+    timeComponents[1] = timeComponents[1] * -1;
+  }
+  return timeComponents;
+}
+
+function pad(num) {
+  if ((num + "").length < 2) {
+    num = "0" + num;
+  }
+  return num;
+}
+
+function formatInput(inputName) {
+  document.getElementById(inputName).value = document.getElementById(inputName).value.replace(/[^0-9\-]/g,'');
+  array = document.getElementById(inputName).value.split("");
+  array.splice(-2, 0, ":");
+  document.getElementById(inputName).value = array.join("");
+}
+</script>
+
+</head>
+<body style="background-color: silver" onload="currentTime()">
+  <nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="navbar-header">
+        <h1 style="color: white">Flexi Calculator</h1>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <p class="lead">Complete all fields except the one you wish to calculate.</p>
+            <form class="form-horizontal">
+              <div class="form-group">
+                <label id="workingDayLabel" for="workingDay" class="col-md-4 control-label">Working Day:</label>
+                <div class="col-md-3">
+                  <input type="text" class="form-control" id="workingDay" placeholder="HH:mm" value="07:24" size="5" maxLength="5" onblur="formatInput(this.id)" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label id="startTimeLabel" for="startTime" class="col-md-4 control-label">Start Time:</label>
+                <div class="col-md-3">
+                  <input type="text" class="form-control" id="startTime" placeholder="HH:mm" size="6" maxLength="5" onblur="formatInput(this.id)" />
+                </div>
+                <div class="col-md-2">
+                  <button type="button" class="btn btn-primary" onClick="calcStart()">Calculate</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label id="lunchDurationLabel" for="lunchDuration" class="col-md-4 control-label">Lunch Break:</label>
+                <div class="col-md-3">
+                  <input type="text" class="form-control" id="lunchDuration" placeholder="HH:mm" value="00:30" size="6" maxLength="5" onblur="formatInput(this.id)" />
+                </div>
+                <div class="col-md-2">
+                  <button type="button" class="btn btn-primary" onClick="calcLunch()">Calculate</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label id="endTimeLabel" for="endTime" class="col-md-4 control-label">Finish Time:</label>
+                <div class="col-md-3">
+                  <input type="text" class="form-control" id="endTime" placeholder="HH:mm" size="6" maxLength="5" onblur="formatInput(this.id)" />
+                </div>
+                <div class="col-md-2">
+                  <button type="button" class="btn btn-primary" onClick="calcEnd()">Calculate</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label id="timeDiffLabel" for="timeDiff" class="col-md-4 control-label">Flexi Gain/Loss:</label>
+                <div class="col-md-3">
+                  <input type="text" class="form-control" id="timeDiff" placeholder="HH:mm" value="00:00" size="6" maxLength="6" onblur="formatInput(this.id)" />
+                </div>
+                <div class="col-md-2">
+                  <button type="button" class="btn btn-primary" onClick="calcDiff()">Calculate</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <form class="form-horizontal">
+              <div class="form-group">
+                <label id="currentTimeLabel" for="currentTime" class="col-md-4 control-label">Current Time:</label>
+                <div class="col-md-3">
+                  <input type="text" class="form-control" id="currentTime" readonly />
+                </div>
+              </div>
+              <div class="form-group">
+                <label id="remainingTimeLabel" for="remainingTime" class="col-md-4 control-label">Remaining:</label>
+                <div class="col-md-3">
+                  <input type="text" class="form-control" id="remainingTime" readonly />
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div id="error-panel" class="row hidden">
+          <div class="col-md-8">
+            <div class="panel panel-danger">
+              <div class="panel-heading">
+                Errors
+              </div>
+              <div id="errors" class="panel-body text-danger"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
