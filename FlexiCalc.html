@@ -26,6 +26,7 @@ function currentTime() {
       endTime = new Date();
       endTime.setHours(timeComponents[0]);
       endTime.setMinutes(timeComponents[1]);
+      endTime.setSeconds(0);
       
       timeLeft = new Date();
       timeLeft.setHours(timeComponents[0] - h);
