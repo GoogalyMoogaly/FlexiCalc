@@ -19,7 +19,7 @@ function currentTime() {
     var m = today.getMinutes();
     var s = today.getSeconds();
     document.getElementById('currentTime').value = pad(h) + ":" + pad(m) + ":" + pad(s);
-    
+
     if (document.getElementById("endTime").value.match(/^[012]?\d:[0-5]\d$/g) != null) {
       timeString = document.getElementById("endTime").value;
       timeComponents = timeString.split(":").map(Number);
@@ -27,12 +27,12 @@ function currentTime() {
       endTime.setHours(timeComponents[0]);
       endTime.setMinutes(timeComponents[1]);
       endTime.setSeconds(0);
-      
+
       timeLeft = new Date();
       timeLeft.setHours(timeComponents[0] - h);
       timeLeft.setMinutes(timeComponents[1] - m);
       timeLeft.setSeconds(0 - s);
-      
+
       prefix = "";
       if (endTime < today) {
         prefix = "-";
@@ -40,10 +40,10 @@ function currentTime() {
         timeLeft.setMinutes(m - timeComponents[1]);
         timeLeft.setSeconds(s);
       }
-    
+
       document.getElementById('remainingTime').value = prefix + pad(timeLeft.getHours()) + ":" + pad(timeLeft.getMinutes()) + ":" + pad(timeLeft.getSeconds());
     }
-    
+
     var t = setTimeout(currentTime, 500);
 }
 
@@ -52,8 +52,8 @@ function calcStart() {
     getInputExcept("startTime");
 
     startTime = new Date();
-    hours = end[0] - (workingDay[0] + diff[0]) - lunch[0]
-    minutes = end[1] - (workingDay[1] + diff[1]) - lunch[1]
+    hours = end[0] - workingDay[0] - diff[0] - lunch[0]
+    minutes = end[1] - workingDay[1] - diff[1] - lunch[1]
 
     startTime.setHours(hours);
     startTime.setMinutes(minutes);
@@ -66,12 +66,15 @@ function calcLunch() {
     getInputExcept("lunchDuration");
 
     lunchTime = new Date();
-    hours = end[0] - (workingDay[0] + start[0] + diff[0])
-    minutes = end[1] - (workingDay[1] + start[1] + diff[1])
-
-    lunchTime.setHours(hours);
-    lunchTime.setMinutes(minutes);
-    document.getElementById("lunchDuration").value = pad(lunchTime.getHours()) + ":" + pad(lunchTime.getMinutes());
+    hours = ((end[0] + diff[0]) - start[0]) - workingDay[0]
+    minutes = ((end[1] + diff[1]) - start[1]) - workingDay[1]
+    if (hours >= 0 && minutes >= 0) {
+      lunchTime.setHours(hours);
+      lunchTime.setMinutes(minutes);
+      document.getElementById("lunchDuration").value = pad(lunchTime.getHours()) + ":" + pad(lunchTime.getMinutes());
+    } else {
+      document.getElementById("lunchDuration").value = "ERROR!";
+    }
   }
 }
 
@@ -80,8 +83,8 @@ function calcEnd() {
     getInputExcept("endTime");
 
     endTime = new Date();
-    hours = (workingDay[0] + start[0] + lunch[0] + diff[0])
-    minutes = (workingDay[1] + start[1] + lunch[1] + diff[1])
+    hours = workingDay[0] + start[0] + lunch[0] + diff[0]
+    minutes = workingDay[1] + start[1] + lunch[1] + diff[1]
 
     endTime.setHours(hours);
     endTime.setMinutes(minutes);
