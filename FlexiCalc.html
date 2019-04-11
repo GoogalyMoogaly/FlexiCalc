@@ -68,7 +68,7 @@ function calcLunch() {
     lunchTime = new Date();
     hours = ((end[0] + diff[0]) - start[0]) - workingDay[0]
     minutes = ((end[1] + diff[1]) - start[1]) - workingDay[1]
-    if (hours + minutes >= 0) {
+    if (hours * 60 + minutes >= 0) {
       lunchTime.setHours(hours);
       lunchTime.setMinutes(minutes);
       document.getElementById("lunchDuration").value = pad(lunchTime.getHours()) + ":" + pad(lunchTime.getMinutes());
